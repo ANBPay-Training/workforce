@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "635747715160",
+    "project_id": "workforce-ef2dc",
+    "storage_bucket": "workforce-ef2dc.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:635747715160:android:3ada61239fe9b7c8e8622d",
+        "android_client_info": {
+          "package_name": "com.anb.workforce"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCnOTZSlYbdQ0YbpSjyq0Z_F0Xczvnq8d8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
