@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:workforce/widgets/login/password_field_widget.dart';
 import '../controllers/login_controller.dart';
 import '../l10n/app_localizations.dart';
 import '../main.dart';
 import '../models/app_state.dart';
+import '../widgets/login/login_Button_Widget.dart';
 import 'AdminDashboard.dart';
 import 'QuickShiftPage.dart';
 
@@ -21,6 +23,9 @@ class _LoginScreenState extends State<LoginScreen> {
   final LoginController _controller = LoginController();
 // indeholder det aktuelle brugergrænsefladesprog som er dansk
   String _language = 'DA';
+
+  final Color primaryBlue = const Color(0xFF2F80ED);
+  final Color inputFillBlue = const Color(0xFFEAF2FD);
 
   @override
   void dispose() {
@@ -118,6 +123,22 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
+  InputDecoration _inputDecoration(String label) {
+    return InputDecoration(
+      labelText: label,
+      filled: true,
+      fillColor: inputFillBlue,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: BorderSide(color: Colors.grey.shade300),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: BorderSide(color: primaryBlue, width: 2),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -133,6 +154,8 @@ class _LoginScreenState extends State<LoginScreen> {
               width: 350,
               child: Form(
                 key: _formKey,
+                // Lytter til isLoading inde i Controlleren
+                // Rent og let alternativ til setState
                 child: ValueListenableBuilder<bool>(
                   valueListenable: _controller.isLoading,
                   builder: (context, loading, _) {
@@ -143,80 +166,6 @@ class _LoginScreenState extends State<LoginScreen> {
                             style: const TextStyle(
                                 fontSize: 20, fontWeight: FontWeight.bold)),
                         const SizedBox(height: 20),
-                        // Role Selection
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Row(
-                                children: [
-                                  Radio<Role>(
-                                    value: Role.workforce,
-                                    groupValue: _controller.selectedRole,
-                                    onChanged: (v) => setState(
-                                        () => _controller.selectedRole = v!),
-                                  ),
-                                  Text(AppLocalizations.of(context)!.workforce),
-                                ],
-                              ),
-                            ),
-                            Expanded(
-                              child: Row(
-                                children: [
-                                  Radio<Role>(
-                                    value: Role.admin,
-                                    groupValue: _controller.selectedRole,
-                                    onChanged: (v) => setState(
-                                        () => _controller.selectedRole = v!),
-                                  ),
-                                  Text(AppLocalizations.of(context)!.admin),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        TextFormField(
-                          controller: _controller.emailController,
-                          decoration: InputDecoration(
-                              labelText: AppLocalizations.of(context)!.username,
-                              border: const OutlineInputBorder()),
-                          validator: (v) => v == null || v.trim().isEmpty
-                              ? AppLocalizations.of(context)!.emailRequired
-                              : null,
-                        ),
-                        const SizedBox(height: 12),
-                        TextFormField(
-                          controller: _controller.passwordController,
-                          obscureText: true,
-                          decoration: InputDecoration(
-                              labelText: AppLocalizations.of(context)!.password,
-                              border: const OutlineInputBorder()),
-                          validator: (v) => v == null || v.isEmpty
-                              ? AppLocalizations.of(context)!.passwordRequired
-                              : null,
-                        ),
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: TextButton(
-                            onPressed: _showResetPasswordDialog,
-                            child: Text(
-                                AppLocalizations.of(context)!.forgotPassword),
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        TextFormField(
-                          controller: _controller.companyIdController,
-                          decoration: InputDecoration(
-                              labelText:
-                                  AppLocalizations.of(context)!.companyId,
-                              border: const OutlineInputBorder()),
-                          validator: (v) => v == null || v.trim().isEmpty
-                              ? AppLocalizations.of(context)!.companyIdRequired
-                              : null,
-                        ),
-
-                        const SizedBox(height: 20),
-
                         DropdownButtonFormField<String>(
                           value: _language,
                           decoration: const InputDecoration(
@@ -248,24 +197,91 @@ class _LoginScreenState extends State<LoginScreen> {
                             );
                           },
                         ),
+                        const SizedBox(height: 30),
+                        // Role Selection
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Row(
+                                children: [
+                                  Radio<Role>(
+                                    value: Role.workforce,
+                                    groupValue: _controller.selectedRole,
+                                    onChanged: (v) => setState(
+                                        () => _controller.selectedRole = v!),
+                                  ),
+                                  Text(AppLocalizations.of(context)!.workforce),
+                                ],
+                              ),
+                            ),
+                            Expanded(
+                              child: Row(
+                                children: [
+                                  Radio<Role>(
+                                    value: Role.admin,
+                                    groupValue: _controller.selectedRole,
+                                    onChanged: (v) => setState(
+                                        // Den valgte værdi går direkte ind i rol
+                                        () => _controller.selectedRole = v!),
+                                  ),
+                                  Text(AppLocalizations.of(context)!.admin),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 12),
+
+                        TextFormField(
+                          controller: _controller.companyIdController,
+                          decoration: _inputDecoration(
+                            AppLocalizations.of(context)!.companyId,
+                          ),
+                          validator: (v) => v == null || v.trim().isEmpty
+                              ? AppLocalizations.of(context)!.companyIdRequired
+                              : null,
+                        ),
 
                         const SizedBox(height: 20),
 
-                        SizedBox(
-                          width: double.infinity,
-                          height: 48,
-                          child: ElevatedButton(
-                            onPressed: loading
-                                ? null
-                                : () {
-                                    // Overførsel af kontekst i en anonym funktion
-                                    _handleLogin(context);
-                                  },
-                            child: loading
-                                ? const CircularProgressIndicator(
-                                    color: Colors.white)
-                                : Text(AppLocalizations.of(context)!.signIn),
+                        TextFormField(
+                          controller: _controller.emailController,
+                          decoration: _inputDecoration(
+                            AppLocalizations.of(context)!.username,
                           ),
+                          validator: (v) => v == null || v.trim().isEmpty
+                              ? AppLocalizations.of(context)!.emailRequired
+                              : null,
+                        ),
+
+                        const SizedBox(height: 12),
+
+                        PasswordFieldWidget(
+                          controller: _controller.passwordController,
+                          label: AppLocalizations.of(context)!.password,
+                          validator: (v) => v == null || v.isEmpty
+                              ? AppLocalizations.of(context)!.passwordRequired
+                              : null,
+                        ),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: TextButton(
+                            onPressed: _showResetPasswordDialog,
+                            child: Text(
+                              AppLocalizations.of(context)!.forgotPassword,
+                              style: TextStyle(color: primaryBlue),
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 12),
+
+                        LoginButtonWidget(
+                          isLoading: loading,
+                          text: AppLocalizations.of(context)!.signIn,
+                          color: primaryBlue,
+                          onPressed: () => _handleLogin(context),
                         ),
                       ],
                     );
