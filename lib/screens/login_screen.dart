@@ -50,18 +50,11 @@ class _LoginScreenState extends State<LoginScreen> {
       _showMessage(error);
       return;
     }
-
+    final role = AppState().role;
+    debugPrint('ROLE AFTER LOGIN: ${AppState().role}');
     final userName = _controller.emailController.text.trim();
-    // Gemmer formularværdier i AppState-classe,
-    // så de er tilgængelige i hele applikationen.
-    AppState().setUserData(
-      companyId: _controller.companyIdController.text.trim(),
-      role: _controller.selectedRole == Role.admin ? 'Admin' : 'Workforce',
-    );
-    // Afhængigt af den rolle, brugeren har valgt,
-    // vil de blive omdirigeret til den relevante side.
 
-    if (_controller.selectedRole == Role.admin) {
+    if (role == 'admin') {
       Navigator.push(
         context,
         MaterialPageRoute(builder: (_) => const AdminDashboard()),
@@ -69,7 +62,9 @@ class _LoginScreenState extends State<LoginScreen> {
     } else {
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (_) => QuickShiftPage(userName: userName)),
+        MaterialPageRoute(
+          builder: (_) => QuickShiftPage(userName: userName),
+        ),
       );
     }
   }
@@ -197,54 +192,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             );
                           },
                         ),
-                        const SizedBox(height: 30),
-                        // Role Selection
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Row(
-                                children: [
-                                  Radio<Role>(
-                                    value: Role.workforce,
-                                    groupValue: _controller.selectedRole,
-                                    onChanged: (v) => setState(
-                                        () => _controller.selectedRole = v!),
-                                  ),
-                                  Text(AppLocalizations.of(context)!.workforce),
-                                ],
-                              ),
-                            ),
-                            Expanded(
-                              child: Row(
-                                children: [
-                                  Radio<Role>(
-                                    value: Role.admin,
-                                    groupValue: _controller.selectedRole,
-                                    onChanged: (v) => setState(
-                                        // Den valgte værdi går direkte ind i rol
-                                        () => _controller.selectedRole = v!),
-                                  ),
-                                  Text(AppLocalizations.of(context)!.admin),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-
-                        const SizedBox(height: 12),
-
-                        TextFormField(
-                          controller: _controller.companyIdController,
-                          decoration: _inputDecoration(
-                            AppLocalizations.of(context)!.companyId,
-                          ),
-                          validator: (v) => v == null || v.trim().isEmpty
-                              ? AppLocalizations.of(context)!.companyIdRequired
-                              : null,
-                        ),
-
                         const SizedBox(height: 20),
-
                         TextFormField(
                           controller: _controller.emailController,
                           decoration: _inputDecoration(
@@ -254,9 +202,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               ? AppLocalizations.of(context)!.emailRequired
                               : null,
                         ),
-
                         const SizedBox(height: 12),
-
                         PasswordFieldWidget(
                           controller: _controller.passwordController,
                           label: AppLocalizations.of(context)!.password,
@@ -274,9 +220,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           ),
                         ),
-
                         const SizedBox(height: 12),
-
                         LoginButtonWidget(
                           isLoading: loading,
                           text: AppLocalizations.of(context)!.signIn,

@@ -79,7 +79,7 @@ class QuickShiftPage extends StatelessWidget {
                       child: Icon(Icons.person, color: Colors.white),
                     ),
                     title: Text(
-                      userName, // 👈 اسم یوزر اینجاست
+                      userName,
                       style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w600,

@@ -1,12 +1,15 @@
-import 'package:flutter/foundation.dart';
+class AppState {
+  static final AppState _instance = AppState._internal();
+  factory AppState() => _instance;
+  AppState._internal();
 
-class AppState extends ChangeNotifier {
-  String? companyId;
   String? role;
 
-  void setUserData({required String companyId, required String role}) {
-    this.companyId = companyId;
+  void setUserRole(String role) {
     this.role = role;
-    notifyListeners();
+  }
+
+  void clear() {
+    role = null;
   }
 }

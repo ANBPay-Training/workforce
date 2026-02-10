@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:workforce/utils/seed_data.dart';
 import 'firebase_options.dart';
 import 'l10n/app_localizations.dart';
 import 'screens/login_screen.dart';
@@ -8,10 +9,9 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
-    // await SeedData.seed(); // Runs only once
     options: DefaultFirebaseOptions.currentPlatform,
   );
-
+  await SeedData.seed(); // Runs only once
   runApp(const MyApp());
 }
 

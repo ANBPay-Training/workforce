@@ -1,17 +1,14 @@
 import 'package:flutter/material.dart';
+import '../models/app_state.dart';
 import '../services/auth_service.dart';
 import '../l10n/app_localizations.dart';
-
-enum Role { workforce, admin }
 
 class LoginController {
   final AuthService _authService = AuthService();
 // Styrer værdien af email-inputfeltet i UI
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
-  final companyIdController = TextEditingController();
-  // Gemmer hvilken rolle brugeren har valgt i UI
-  Role selectedRole = Role.workforce;
+
 // Holder styr på om login er i gang
   ValueNotifier<bool> isLoading = ValueNotifier(false);
 
@@ -21,7 +18,6 @@ class LoginController {
   void dispose() {
     emailController.dispose();
     passwordController.dispose();
-    companyIdController.dispose();
     // Stopper ValueNotifier og frigør lyttere
     isLoading.dispose();
   }
@@ -45,18 +41,15 @@ class LoginController {
         return locale.errorUserNotFound;
       }
 // får rolen fra Firestore
-      final actualRole = await _authService.getUserRole(email);
+      final actualRole = await _authService.getUserRole();
 // sikrer vi os, at brugeren rent faktisk er registreret i vores system, og
 // at deres rolle er angivet.
       if (actualRole == null) {
         return locale.errorUserNotRegistered;
       }
-      // tjekker rolen tilladelse
-// Brugeren valgte Admin Men databasen siger: ikke admin → adgang nægtet
-      if (selectedRole == Role.admin && actualRole != 'admin') {
-        return locale.errorNotAdmin;
-      }
-
+      // Gemmer formularværdier i AppState-classe,
+      // så de er tilgængelige i hele applikationen.
+      AppState().setUserRole(actualRole);
       return null; // ✅ Success
     } catch (_) {
       // Uventet fejl (netværk, Firebase osv.)

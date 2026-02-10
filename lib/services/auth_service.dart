@@ -23,18 +23,18 @@ class AuthService {
     }
   }
 
-  Future<String?> getUserRole(String email) async {
-    final query = await _firestore
+  Future<String?> getUserRole() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return null;
+
+    final doc = await FirebaseFirestore.instance
         .collection('users')
-        .where('email', isEqualTo: email)
-        //Begrænser resultatet til maksimalt ét dokument (for bedre performance)
-        .limit(1)
+        .doc(user.uid)
         .get();
 
-    if (query.docs.isEmpty) return null;
-    final data = query.docs.first.data();
-    // Bruges til at afgøre, om brugeren må gå til AdminDashboard
-    return (data['role'] ?? 'Workforce').toString().toLowerCase();
+    if (!doc.exists) return null;
+
+    return doc.data()?['role'] as String?;
   }
 
   String _mapAuthError(FirebaseAuthException e) {
