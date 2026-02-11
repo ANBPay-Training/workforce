@@ -6,7 +6,7 @@ import '../main.dart';
 import '../models/app_state.dart';
 import '../widgets/login/login_Button_Widget.dart';
 import 'AdminDashboard.dart';
-import 'QuickShiftPage.dart';
+import 'branch_list_page.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -63,7 +63,7 @@ class _LoginScreenState extends State<LoginScreen> {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (_) => QuickShiftPage(userName: userName),
+          builder: (_) => BranchListPage(userName: userName),
         ),
       );
     }
