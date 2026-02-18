@@ -6,7 +6,7 @@ class WorkSession {
   final DateTime startTime;
   final DateTime? endTime;
   final List<BreakSession> breaks;
-  final int totalWorkMinutes; // ⬅️Total working hours in a session
+  final int totalWorkMinutes; // Total working hours in a session
 
   WorkSession({
     required this.startTime,

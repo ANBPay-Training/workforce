@@ -3,6 +3,7 @@ import '../models/branch.dart';
 import '../services/user_branches_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+import '../utils/code_dialog.dart';
 import 'Start_Work_Page.dart';
 
 class BranchListPage extends StatefulWidget {
@@ -15,7 +16,7 @@ class BranchListPage extends StatefulWidget {
 }
 
 class _BranchListPageState extends State<BranchListPage> {
-  final UserBranchesService service = UserBranchesService();
+  final UserBranchesService userBranchService = UserBranchesService();
 
   List<Branch> branches = [];
   Map<String, String> companyNames = {};
@@ -30,9 +31,9 @@ class _BranchListPageState extends State<BranchListPage> {
   Future<void> loadBranches() async {
     final uid = FirebaseAuth.instance.currentUser!.uid;
 
-    final companyIds = await service.getUserCompanies(uid);
-    final branchList = await service.getUserBranches(uid);
-    final companyMap = await service.getCompanyNames(companyIds);
+    final companyIds = await userBranchService.getUserCompanies(uid);
+    final branchList = await userBranchService.getUserBranches(uid);
+    final companyMap = await userBranchService.getCompanyNames(companyIds);
 
     setState(() {
       branches = branchList;
@@ -42,24 +43,29 @@ class _BranchListPageState extends State<BranchListPage> {
   }
 
   void _onBranchSelected(BuildContext context, Branch branch) async {
-    final ok = await _askForUserCode(context);
+    final uid = FirebaseAuth.instance.currentUser!.uid;
 
-    if (ok == true) {
-      final uid = FirebaseAuth.instance.currentUser!.uid;
+    final ok = await CodeDialog.askForCode(
+      context: context,
+      userId: uid,
+      userBranchesService: userBranchService, // UserBranchesService instance
+      title: "Enter your code to access branch",
+    );
 
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => StartWorkPage(
-            userId: uid,
-            companyId: branch.companyId,
-            branchId: branch.id,
-            branchName: branch.name,
-            companyName: companyNames[branch.companyId] ?? '',
-          ),
+    if (!ok) return;
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => StartWorkPage(
+          userId: uid,
+          companyId: branch.companyId,
+          branchId: branch.id,
+          branchName: branch.name,
+          companyName: companyNames[branch.companyId] ?? '',
         ),
-      );
-    }
+      ),
+    );
   }
 
   Future<bool?> _askForUserCode(BuildContext context) {
@@ -83,7 +89,7 @@ class _BranchListPageState extends State<BranchListPage> {
             ),
             ElevatedButton(
               onPressed: () async {
-                final isValid = await service.verifyUserCode(
+                final isValid = await userBranchService.verifyUserCode(
                   uid,
                   controller.text.trim(),
                 );

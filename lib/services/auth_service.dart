@@ -2,11 +2,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class AuthService {
-  // bruges til login, logout, reset password og
+  //  Used for login, logout, and password reset.
   final FirebaseAuth _auth = FirebaseAuth.instance;
   // bruges som database til at gemme og hente brugerdata
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-// En asynkron funktion, der logger en bruger ind og returnerer User eller null.
+  // Asynchronously logs in a user.
+  // Returns a User on success, otherwise null.
   Future<User?> signIn({
     required String email,
     required String password,
@@ -18,7 +19,7 @@ class AuthService {
       );
       return cred.user;
     } on FirebaseAuthException catch (e) {
-      // Oversætter Firebase-fejlen til din egen fejl
+      // Translates the Firebase error into your own error.
       throw _mapAuthError(e);
     }
   }

@@ -8,7 +8,7 @@ class TimeEntry {
   final String branchId;
   final String workDate; // YYYY-MM-DD
   final List<WorkSession> sessions;
-  final int totalWorkMinutes; // ⬅️Total working hours in a day
+  final int totalWorkMinutes; // Total working hours in a day
   final String status; // running | completed
 
   TimeEntry({

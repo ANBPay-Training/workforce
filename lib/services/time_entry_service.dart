@@ -22,7 +22,32 @@ class TimeEntryService {
 
     final doc = await docRef.get();
 
-    if (doc.exists) return;
+    if (doc.exists) {
+      final entry = TimeEntry.fromFirestore(
+        doc.id,
+        doc.data() as Map<String, dynamic>,
+      );
+
+      final sessions = List<WorkSession>.from(entry.sessions);
+
+      // If the last session has expired, create a new session.
+      if (sessions.isNotEmpty && sessions.last.endTime != null) {
+        sessions.add(
+          WorkSession(
+            startTime: DateTime.now(),
+            breaks: [],
+            totalWorkMinutes: 0,
+          ),
+        );
+
+        await docRef.update({
+          "sessions": sessions.map((e) => e.toMap()).toList(),
+          "status": "running",
+        });
+      }
+
+      return;
+    }
 
     final session = WorkSession(
       startTime: DateTime.now(),
@@ -140,12 +165,16 @@ class TimeEntryService {
       String userId, String companyId, String branchId) async {
     final today =
         "${DateTime.now().year}-${DateTime.now().month}-${DateTime.now().day}";
-    final docRef = FirebaseFirestore.instance
-        .collection('timeEntries')
-        .doc("${userId}_$today");
+    final docRef = _db.collection('timeEntries').doc("${userId}_$today");
     final doc = await docRef.get();
 
     if (!doc.exists) return null;
-    return TimeEntry.fromFirestore(doc.id, doc.data()!);
+
+    final entry = TimeEntry.fromFirestore(doc.id, doc.data()!);
+
+    // Only the current branch and company
+    if (entry.branchId != branchId || entry.companyId != companyId) return null;
+
+    return entry;
   }
 }

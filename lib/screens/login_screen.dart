@@ -15,13 +15,13 @@ class LoginScreen extends StatefulWidget {
   State<LoginScreen> createState() => _LoginScreenState();
 }
 
-// State-klasse for at den kan indeholde dynamiske variabler og ændringer i UI.
+// State-class so that it can contain dynamic variables and changes in the UI.
 class _LoginScreenState extends State<LoginScreen> {
-  // Opretter en unik nøgle til formularen  ogbruges til kontrol og
-  // validering af formularen.
+  // Creates a unique key for the form and is used for checking and
+  // validating the form.
   final _formKey = GlobalKey<FormState>();
   final LoginController _controller = LoginController();
-// indeholder det aktuelle brugergrænsefladesprog som er dansk
+// Contains the current user interface language which is Danish
   String _language = 'DA';
 
   final Color primaryBlue = const Color(0xFF2F80ED);
@@ -30,22 +30,22 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   void dispose() {
     _controller.dispose();
-    // at frigøre alle ressourcer, safecleanup
+    // To free up all resources, safecleanup
     super.dispose();
   }
 
-  // en methode for at vise en lille besked nederst på skærmen
+  // A method to display a small message at the bottom of the screen
   void _showMessage(String text) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
   }
 
   Future<void> _handleLogin(BuildContext context) async {
-    // Først kontrolleres det, om formularen er gyldig eller ej.
-    // Hvis et af felterne er ugyldigt, stopper metoden, før den fortsætter.
+    // First, it checks whether the form is valid or not.
+    // If any of the fields are invalid, the method stops before continuing.
     if (!_formKey.currentState!.validate()) return;
-    // Returnerede en fejl hvis login mislykkede
+    // Returned an error if login failed
     final error = await _controller.login(context);
-    // Viser en fejlmeddelelse og stopper
+    // Displays an error message and stops
     if (error != null) {
       _showMessage(error);
       return;

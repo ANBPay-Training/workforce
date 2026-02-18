@@ -5,33 +5,33 @@ import '../l10n/app_localizations.dart';
 
 class LoginController {
   final AuthService _authService = AuthService();
-// Styrer værdien af email-inputfeltet i UI
+  // Controls the value of the email input field in the UI
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
 
-// Holder styr på om login er i gang
+  // Keeps track of whether login is in progress
   ValueNotifier<bool> isLoading = ValueNotifier(false);
 
-// 🔹 Kaldes når controlleren ikke længere bruges
-// 🔹 Bruges til at rydde op i hukommelsen for
-// at forhindre at appen bliver langsommere
+  // Called when the controller is no longer in use
+  // Used to clean up memory to
+  // prevent the app from slowing down
   void dispose() {
     emailController.dispose();
     passwordController.dispose();
-    // Stopper ValueNotifier og frigør lyttere
+    // Stops ValueNotifier and releases listeners
     isLoading.dispose();
   }
 
   Future<String?> login(BuildContext context) async {
     final email = emailController.text.trim();
     final password = passwordController.text;
-    // Aktiverer loading-state
+    // Activates loading state
     isLoading.value = true;
 
     final locale = AppLocalizations.of(context)!;
 
     try {
-      // Sign in med Firebase Auth
+      // Sign in with Firebase Auth
       final user = await _authService.signIn(
         email: email,
         password: password,
@@ -40,37 +40,37 @@ class LoginController {
       if (user == null) {
         return locale.errorUserNotFound;
       }
-// får rolen fra Firestore
+      // gets the role from Firestore
       final actualRole = await _authService.getUserRole();
-// sikrer vi os, at brugeren rent faktisk er registreret i vores system, og
-// at deres rolle er angivet.
+      // Here we ensure that the user is actually registered in our system, and
+      // that their role is specified.
       if (actualRole == null) {
         return locale.errorUserNotRegistered;
       }
-      // Gemmer formularværdier i AppState-classe,
-      // så de er tilgængelige i hele applikationen.
+      // Stores form values in the AppState class,
+      // making them available across the entire application.
       AppState().setUserRole(actualRole);
       return null; // ✅ Success
     } catch (_) {
-      // Uventet fejl (netværk, Firebase osv.)
+      // Unexpected error (network, Firebase, etc.)
       return locale.errorLoginFailed;
     } finally {
-      // Stopper loading uanset succes eller fejl
+      // Stops loading regardless of success or error.”
       isLoading.value = false;
     }
   }
 
-  /// Nulstil adgangskode
-  /// Returnerer null hvis det lykkedes, ellers fejlmeddelelse
+  /// Reset password
+  /// Returns null if successful, otherwise an error message.
   Future<String?> resetPassword(BuildContext context, String email) async {
     final locale = AppLocalizations.of(context)!;
-// hvis e-mailen er tom, eller e-mailstrukturen er forkert.
+    // If the email is empty or has an invalid format.
     if (email.isEmpty || !email.contains('@')) {
       return locale.invalidEmail;
     }
 
     try {
-      // Ansvarlig for at sende e-mails
+      // Responsible for sending emails.
       await _authService.sendPasswordReset(email);
       return locale.resetPasswordSent;
     } catch (e) {
