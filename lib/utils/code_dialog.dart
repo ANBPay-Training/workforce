@@ -4,7 +4,7 @@ import '../services/user_branches_service.dart';
 class CodeDialog {
   static Future<bool> askForCode({
     required BuildContext context,
-    required String userId,
+    required String employeeId,
     required UserBranchesService userBranchesService,
     String title = "Enter your 4-digit code",
   }) async {
@@ -35,7 +35,7 @@ class CodeDialog {
               if (code.length != 4) return;
 
               final valid =
-                  await userBranchesService.verifyUserCode(userId, code);
+                  await userBranchesService.verifyEmployeePin(employeeId, code);
               if (valid) {
                 Navigator.pop(context, true);
               } else {

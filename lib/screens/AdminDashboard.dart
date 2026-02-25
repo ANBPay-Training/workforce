@@ -1,20 +1,14 @@
 import 'package:flutter/material.dart';
 
+import '../utils/baseScaffold.dart';
+
 class AdminDashboard extends StatelessWidget {
   const AdminDashboard({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Admin Dashboard'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            Navigator.pop(context);
-          },
-        ),
-      ),
+    return BaseScaffold(
+      title: 'Admin Dashboard',
       body: const Center(
         child: Text(
           'Welcome Admin 👑',

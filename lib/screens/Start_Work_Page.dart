@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:workforce/services/user_branches_service.dart';
 import '../services/time_entry_service.dart';
 import 'package:intl/intl.dart';
+import '../utils/baseScaffold.dart';
 import '../utils/code_dialog.dart';
+import 'dart:async';
 
 class StartWorkPage extends StatefulWidget {
-  final String userId;
+  final String employeeId;
   final String companyId;
   final String branchId;
   final String companyName;
@@ -13,7 +15,7 @@ class StartWorkPage extends StatefulWidget {
 
   const StartWorkPage({
     super.key,
-    required this.userId,
+    required this.employeeId,
     required this.companyId,
     required this.branchId,
     required this.companyName,
@@ -28,8 +30,13 @@ class _StartWorkPageState extends State<StartWorkPage> {
   final timeEntryService = TimeEntryService();
   final userBranchesService = UserBranchesService();
 
+  String? employeeName;
+  DateTime nowTime = DateTime.now();
+
   DateTime? workStart;
   DateTime? breakStart;
+
+  Timer? _timer;
 
   bool working = false;
   bool onBreak = false;
@@ -41,19 +48,64 @@ class _StartWorkPageState extends State<StartWorkPage> {
   void initState() {
     super.initState();
     _loadTimeEntry();
+    _startTimer();
+    _loadEmployee();
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _loadEmployee() async {
+    final employee =
+        await userBranchesService.getEmployeeById(widget.employeeId);
+
+    setState(() {
+      employeeName = employee.name;
+    });
+  }
+
+  void _startTimer() {
+    _timer?.cancel();
+
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      setState(() {
+        nowTime = DateTime.now();
+
+        if (working && !onBreak && workStart != null) {
+          totalWork = DateTime.now().difference(workStart!) - totalBreak;
+        }
+
+        if (onBreak && breakStart != null) {
+          totalBreak = DateTime.now().difference(breakStart!);
+        }
+      });
+    });
   }
 
   Future<void> startWork() async {
+    final doc = await userBranchesService.getEmployeeById(widget.employeeId);
+
+    if (doc.isWorking && doc.activeBranchId != widget.branchId) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("You are already working in another branch."),
+        ),
+      );
+      return;
+    }
     final ok = await CodeDialog.askForCode(
       context: context,
-      userId: widget.userId,
+      employeeId: widget.employeeId,
       userBranchesService: userBranchesService,
       title: "Enter code to Start Work",
     );
     if (!ok) return;
 
     await timeEntryService.startWork(
-      userId: widget.userId,
+      employeeId: widget.employeeId,
       companyId: widget.companyId,
       branchId: widget.branchId,
     );
@@ -67,13 +119,13 @@ class _StartWorkPageState extends State<StartWorkPage> {
   Future<void> startBreak() async {
     final ok = await CodeDialog.askForCode(
       context: context,
-      userId: widget.userId,
+      employeeId: widget.employeeId,
       userBranchesService: userBranchesService,
       title: "Enter code to Start Break",
     );
     if (!ok) return;
 
-    await timeEntryService.startBreak(widget.userId);
+    await timeEntryService.startBreak(widget.employeeId);
 
     setState(() {
       onBreak = true;
@@ -84,12 +136,12 @@ class _StartWorkPageState extends State<StartWorkPage> {
   Future<void> endBreak() async {
     final ok = await CodeDialog.askForCode(
       context: context,
-      userId: widget.userId,
+      employeeId: widget.employeeId,
       userBranchesService: userBranchesService,
       title: "Enter code to End Break",
     );
     if (!ok) return;
-    await timeEntryService.endBreak(widget.userId);
+    await timeEntryService.endBreak(widget.employeeId);
 
     final diff = DateTime.now().difference(breakStart!);
 
@@ -103,12 +155,12 @@ class _StartWorkPageState extends State<StartWorkPage> {
   Future<void> endWork() async {
     final ok = await CodeDialog.askForCode(
       context: context,
-      userId: widget.userId,
+      employeeId: widget.employeeId,
       userBranchesService: userBranchesService,
       title: "Enter code to End Work",
     );
     if (!ok) return;
-    await timeEntryService.endWork(widget.userId);
+    await timeEntryService.endWork(widget.employeeId);
 
     final diff = DateTime.now().difference(workStart!);
 
@@ -120,7 +172,13 @@ class _StartWorkPageState extends State<StartWorkPage> {
   }
 
   String format(Duration d) {
-    return "${d.inHours}:${(d.inMinutes % 60).toString().padLeft(2, '0')}";
+    final hours = d.inHours;
+    final minutes = d.inMinutes % 60;
+    final seconds = d.inSeconds % 60;
+
+    return "${hours.toString().padLeft(2, '0')}:"
+        "${minutes.toString().padLeft(2, '0')}:"
+        "${seconds.toString().padLeft(2, '0')}";
   }
 
   Widget button(String text, VoidCallback onTap, Color color) {
@@ -139,7 +197,7 @@ class _StartWorkPageState extends State<StartWorkPage> {
 
   Future<void> _loadTimeEntry() async {
     final entry = await timeEntryService.getTimeEntryForToday(
-      widget.userId,
+      widget.employeeId,
       widget.companyId,
       widget.branchId,
     );
@@ -161,13 +219,13 @@ class _StartWorkPageState extends State<StartWorkPage> {
         }
       }
 
-      final workDuration = (lastSession.endTime ?? DateTime.now())
-              .difference(lastSession.startTime) -
+      final workDuration = (lastSession.endWork ?? DateTime.now())
+              .difference(lastSession.startWork) -
           totalBreakDuration;
 
       setState(() {
         // If the last session has not yet ended, workStart is active.
-        workStart = lastSession.startTime;
+        workStart = lastSession.startWork;
         breakStart = activeBreakStart;
         totalBreak = totalBreakDuration;
         totalWork = workDuration;
@@ -175,9 +233,9 @@ class _StartWorkPageState extends State<StartWorkPage> {
         // Determine the exact status
         onBreak = activeBreakStart != null; // If the break is active.
         // Is job still in progress
-        working = lastSession.endTime == null || onBreak;
+        working = lastSession.endWork == null || onBreak;
 
-        print("endTime: ${lastSession.endTime}");
+        print("endTime: ${lastSession.endWork}");
         print("activeBreakStart: $activeBreakStart");
       });
     }
@@ -185,14 +243,32 @@ class _StartWorkPageState extends State<StartWorkPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text("Work Session")),
+    return BaseScaffold(
+      title: widget.branchName,
       body: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Text(widget.companyName, style: const TextStyle(fontSize: 20)),
+            // 👇 اسم کارمند اینجا اضافه شود
+            if (employeeName != null)
+              Text(
+                employeeName!,
+                style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+
+            const SizedBox(height: 8),
+
+            Text(
+              widget.companyName,
+              style: const TextStyle(fontSize: 20),
+            ),
+
             Text(widget.branchName),
+
             const SizedBox(height: 20),
             if (workStart != null)
               Text(

@@ -14,7 +14,7 @@ class PasswordFieldWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return TextFormField(
         controller: controller,
-        // Holder adgangskoden hemmelig.
+        //  Keeps the password hidden.
         obscureText: true,
         decoration: InputDecoration(
           labelText: label,

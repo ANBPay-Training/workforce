@@ -26,7 +26,7 @@ class LoginButtonWidget extends StatelessWidget {
           ),
         ),
         onPressed: isLoading ? null : onPressed,
-        // Ved login Spinneren vises
+        // Shows the spinner during login.
         child: isLoading
             ? const CircularProgressIndicator(color: Colors.white)
             : Text(

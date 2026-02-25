@@ -1,25 +1,29 @@
 import 'package:flutter/material.dart';
 import '../models/branch.dart';
 import '../services/user_branches_service.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-
-import '../utils/code_dialog.dart';
-import 'Start_Work_Page.dart';
+import '../services/time_entry_service.dart';
+import '../utils/logout_helper.dart';
+import 'employee_list_page.dart';
 
 class BranchListPage extends StatefulWidget {
-  final String userName;
+  final String companyId;
+  final String companyName;
 
-  const BranchListPage({super.key, required this.userName});
+  const BranchListPage({
+    super.key,
+    required this.companyId,
+    required this.companyName,
+  });
 
   @override
   State<BranchListPage> createState() => _BranchListPageState();
 }
 
 class _BranchListPageState extends State<BranchListPage> {
-  final UserBranchesService userBranchService = UserBranchesService();
+  final UserBranchesService service = UserBranchesService();
+  final TimeEntryService timeService = TimeEntryService();
 
   List<Branch> branches = [];
-  Map<String, String> companyNames = {};
   bool loading = true;
 
   @override
@@ -29,84 +33,27 @@ class _BranchListPageState extends State<BranchListPage> {
   }
 
   Future<void> loadBranches() async {
-    final uid = FirebaseAuth.instance.currentUser!.uid;
+    final list = await service.getBranchesByCompany(widget.companyId);
 
-    final companyIds = await userBranchService.getUserCompanies(uid);
-    final branchList = await userBranchService.getUserBranches(uid);
-    final companyMap = await userBranchService.getCompanyNames(companyIds);
+    /// 🔎 Checking if an employee is working in a branch
 
     setState(() {
-      branches = branchList;
-      companyNames = companyMap;
+      branches = list;
       loading = false;
     });
   }
 
-  void _onBranchSelected(BuildContext context, Branch branch) async {
-    final uid = FirebaseAuth.instance.currentUser!.uid;
-
-    final ok = await CodeDialog.askForCode(
-      context: context,
-      userId: uid,
-      userBranchesService: userBranchService, // UserBranchesService instance
-      title: "Enter your code to access branch",
-    );
-
-    if (!ok) return;
-
+  void _onBranchSelected(Branch branch) {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => StartWorkPage(
-          userId: uid,
-          companyId: branch.companyId,
+        builder: (_) => EmployeeListPage(
+          companyId: widget.companyId,
+          companyName: widget.companyName,
           branchId: branch.id,
           branchName: branch.name,
-          companyName: companyNames[branch.companyId] ?? '',
         ),
       ),
-    );
-  }
-
-  Future<bool?> _askForUserCode(BuildContext context) {
-    final controller = TextEditingController();
-    final uid = FirebaseAuth.instance.currentUser!.uid;
-
-    return showDialog<bool>(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text("Enter your code"),
-          content: TextField(
-            controller: controller,
-            keyboardType: TextInputType.number,
-            decoration: const InputDecoration(labelText: "Code"),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text("Cancel"),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                final isValid = await userBranchService.verifyUserCode(
-                  uid,
-                  controller.text.trim(),
-                );
-
-                if (isValid) {
-                  Navigator.pop(context, true);
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Wrong code")),
-                  );
-                }
-              },
-              child: const Text("OK"),
-            ),
-          ],
-        );
-      },
     );
   }
 
@@ -114,65 +61,28 @@ class _BranchListPageState extends State<BranchListPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Select Branch"),
+        title: Text(widget.companyName),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: () => LogoutHelper.logout(context),
+          ),
+        ],
       ),
-      backgroundColor: Colors.grey.shade100,
       body: loading
           ? const Center(child: CircularProgressIndicator())
-          : Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "Welcome ${widget.userName}",
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Expanded(
-                    child: ListView.builder(
-                      itemCount: branches.length,
-                      itemBuilder: (context, index) {
-                        final branch = branches[index];
+          : ListView.builder(
+              itemCount: branches.length,
+              itemBuilder: (context, index) {
+                final branch = branches[index];
 
-                        return Card(
-                          elevation: 3,
-                          margin: const EdgeInsets.only(bottom: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                          child: ListTile(
-                              contentPadding: const EdgeInsets.all(16),
-                              subtitle: Text(
-                                companyNames[branch.companyId] ?? '',
-                              ),
-                              leading: const Icon(
-                                Icons.business,
-                                color: Colors.indigo,
-                              ),
-                              title: Text(
-                                branch.name,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              trailing: const Icon(Icons.arrow_forward_ios),
-                              onTap: () {
-                                final uid =
-                                    FirebaseAuth.instance.currentUser!.uid;
-
-                                _onBranchSelected(context, branch);
-                              }),
-                        );
-                      },
-                    ),
-                  ),
-                ],
-              ),
+                return ListTile(
+                  title: Text(branch.name),
+                  trailing: const Icon(Icons.arrow_forward_ios),
+                  onTap: () => _onBranchSelected(branch),
+                );
+              },
             ),
     );
   }

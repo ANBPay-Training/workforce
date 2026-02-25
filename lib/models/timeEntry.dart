@@ -3,7 +3,7 @@ import 'package:workforce/models/workSession.dart';
 
 class TimeEntry {
   final String id;
-  final String userId;
+  final String employeeId;
   final String companyId;
   final String branchId;
   final String workDate; // YYYY-MM-DD
@@ -13,7 +13,7 @@ class TimeEntry {
 
   TimeEntry({
     required this.id,
-    required this.userId,
+    required this.employeeId,
     required this.companyId,
     required this.branchId,
     required this.workDate,
@@ -21,13 +21,25 @@ class TimeEntry {
     required this.totalWorkMinutes,
     required this.status,
   });
-
+// Factory constructor that converts raw Firestore data (Map<String, dynamic>)
+// into a proper TimeEntry model object, since Firestore only returns a Map.
   factory TimeEntry.fromFirestore(String id, Map<String, dynamic> data) {
+    // Retrieve the "sessions" field from the Map.
+    // If it is null, create an empty list.
+    // This ensures sessionsData is always a list,
+    // even if no sessions are stored.
+
+    // TimeEntry
+    //  ├── sessions (List)
+    //  │     ├── WorkSession
+    //  │     │      ├── breaks (List)
+    //  │     │      │      └── BreakSession
+
     final sessionsData = data['sessions'] as List<dynamic>? ?? [];
 
     return TimeEntry(
       id: id,
-      userId: data['userId'],
+      employeeId: data['employeeId'],
       companyId: data['companyId'],
       branchId: data['branchId'],
       workDate: data['workDate'],
@@ -41,7 +53,7 @@ class TimeEntry {
 
   Map<String, dynamic> toFirestore() {
     return {
-      'userId': userId,
+      'employeeId': employeeId,
       'companyId': companyId,
       'branchId': branchId,
       'workDate': workDate,

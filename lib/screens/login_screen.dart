@@ -4,6 +4,7 @@ import '../controllers/login_controller.dart';
 import '../l10n/app_localizations.dart';
 import '../main.dart';
 import '../models/app_state.dart';
+import '../utils/logout_helper.dart';
 import '../widgets/login/login_Button_Widget.dart';
 import 'AdminDashboard.dart';
 import 'branch_list_page.dart';
@@ -50,64 +51,69 @@ class _LoginScreenState extends State<LoginScreen> {
       _showMessage(error);
       return;
     }
-    final role = AppState().role;
-    debugPrint('ROLE AFTER LOGIN: ${AppState().role}');
-    final userName = _controller.emailController.text.trim();
-
-    if (role == 'admin') {
-      Navigator.push(
+    // Decide navigation based on role stored in AppState
+    if (AppState().isAdmin) {
+      Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const AdminDashboard()),
       );
-    } else {
-      Navigator.push(
+    } else if (AppState().isCompany) {
+      Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (_) => BranchListPage(userName: userName),
+          builder: (_) => BranchListPage(
+            companyId: AppState().userId!, // UID of company
+            companyName: AppState().companyName!, // Company name
+          ),
         ),
       );
     }
   }
 
   void _showResetPasswordDialog() {
-    // aflæse den mail-værdi, som brugeren har indtastet.
+    // Read the email address entered by the user.
     final resetEmailController = TextEditingController();
-    // (popup) på skærmen.
+    // Display a popup on the screen.
     showDialog(
-      // Kontekst er påkrævet for at vise dialogen på den aktuelle side
+      // BuildContext is required to display the dialog on the current screen.
       context: context,
-      // standard Flutter-vinduet med titel, indhold og knapper.
+      // Uses Flutter’s standard dialog with a title, content, and action buttons.
       builder: (context) => AlertDialog(
         title: Text(AppLocalizations.of(context)!.resetPasswordTitle),
-        // For at indtaste brugerens e-mail
+        // Text field for entering the user's email address.
         content: TextField(
           controller: resetEmailController,
-          // Åbner det relevante e-mail-tastatur.
+          // Opens the appropriate email keyboard.
           keyboardType: TextInputType.emailAddress,
           decoration: const InputDecoration(
               labelText: 'Email', hintText: 'user@company.com'),
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: () => LogoutHelper.logout(context),
+          ),
           TextButton(
               onPressed: () => Navigator.pop(context),
               child: const Text('Cancel')),
           ElevatedButton(
             onPressed: () async {
-              // Hvis e-mailen er tom eller forkert, vises en fejlmeddelelse,
-              // og processen fortsætter ikke.
+              // If the email is empty or invalid, an error message is displayed
+              // and the process does not continue.
               final email = resetEmailController.text.trim();
               if (email.isEmpty || !email.contains('@')) {
                 _showMessage(AppLocalizations.of(context)!.invalidEmail);
                 return;
               }
-              // Metoden resetPassword kaldes i controlleren.
-              // context gives for at accesseres oversættelserne
+              // Calls the resetPassword method in the controller.
+
               final error = await _controller.resetPassword(context, email);
               Navigator.pop(context);
               if (error != null)
                 _showMessage(error);
               else
                 _showMessage(
+                  // Provides context to access translations
                   AppLocalizations.of(context)!.resetPasswordSent,
                 );
             },
@@ -149,10 +155,10 @@ class _LoginScreenState extends State<LoginScreen> {
               width: 350,
               child: Form(
                 key: _formKey,
-                // Lytter til isLoading inde i Controlleren
-                // Rent og let alternativ til setState
+                // Listens to isLoading inside the controller.
                 child: ValueListenableBuilder<bool>(
                   valueListenable: _controller.isLoading,
+                  // A clean and lightweight alternative to setState.
                   builder: (context, loading, _) {
                     return Column(
                       mainAxisSize: MainAxisSize.min,
