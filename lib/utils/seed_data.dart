@@ -6,14 +6,15 @@ class SeedData {
     final firestore = FirebaseFirestore.instance;
     final auth = FirebaseAuth.instance;
 
-    final seedDoc = firestore.collection('config').doc('seed_v8');
+    final seedDoc = firestore.collection('config').doc('seed_v9');
+
     if ((await seedDoc.get()).exists) {
       print('Seed already executed');
       return;
     }
 
     /// ======================
-    /// Admin
+    /// ADMIN
     /// ======================
     final adminAuth = await auth.createUserWithEmailAndPassword(
       email: 'admin@test.com',
@@ -28,7 +29,7 @@ class SeedData {
     });
 
     /// ======================
-    /// 🏢 COMPANY 1
+    /// COMPANY 1
     /// ======================
     final company1Auth = await auth.createUserWithEmailAndPassword(
       email: 'company1@test.com',
@@ -42,20 +43,20 @@ class SeedData {
       'active': true,
     });
 
-    final c1_branch1 = await firestore.collection('branches').add({
+    await firestore.collection('branches').add({
       'companyId': company1Auth.user!.uid,
       'name': 'Branch A',
       'active': true,
     });
 
-    final c1_branch2 = await firestore.collection('branches').add({
+    await firestore.collection('branches').add({
       'companyId': company1Auth.user!.uid,
       'name': 'Branch B',
       'active': true,
     });
 
     /// ======================
-    /// 🏢 COMPANY 2
+    /// COMPANY 2
     /// ======================
     final company2Auth = await auth.createUserWithEmailAndPassword(
       email: 'company2@test.com',
@@ -69,26 +70,26 @@ class SeedData {
       'active': true,
     });
 
-    final c2_branch1 = await firestore.collection('branches').add({
+    await firestore.collection('branches').add({
       'companyId': company2Auth.user!.uid,
       'name': 'Branch C',
       'active': true,
     });
 
-    final c2_branch2 = await firestore.collection('branches').add({
+    await firestore.collection('branches').add({
       'companyId': company2Auth.user!.uid,
       'name': 'Branch D',
       'active': true,
     });
 
-    final c2_branch3 = await firestore.collection('branches').add({
+    await firestore.collection('branches').add({
       'companyId': company2Auth.user!.uid,
       'name': 'Branch E',
       'active': true,
     });
 
     /// ======================
-    /// 🏢 COMPANY 3
+    /// COMPANY 3
     /// ======================
     final company3Auth = await auth.createUserWithEmailAndPassword(
       email: 'company3@test.com',
@@ -102,17 +103,21 @@ class SeedData {
       'active': true,
     });
 
-    final c3_branch1 = await firestore.collection('branches').add({
+    await firestore.collection('branches').add({
       'companyId': company3Auth.user!.uid,
       'name': 'Branch F',
       'active': true,
     });
 
     /// ======================
-    /// 👤 EMPLOYEES
+    /// EMPLOYEE 1
     /// ======================
+    final emp1Auth = await auth.createUserWithEmailAndPassword(
+      email: 'emp1@test.com',
+      password: '123456',
+    );
 
-    await firestore.collection('employees').add({
+    await firestore.collection('employees').doc(emp1Auth.user!.uid).set({
       'name': 'Employee 1',
       'email': 'emp1@test.com',
       'role': 'employee',
@@ -124,7 +129,15 @@ class SeedData {
       'activeBranchId': null,
     });
 
-    await firestore.collection('employees').add({
+    /// ======================
+    /// EMPLOYEE 2
+    /// ======================
+    final emp2Auth = await auth.createUserWithEmailAndPassword(
+      email: 'emp2@test.com',
+      password: '123456',
+    );
+
+    await firestore.collection('employees').doc(emp2Auth.user!.uid).set({
       'name': 'Employee 2',
       'email': 'emp2@test.com',
       'role': 'employee',
@@ -136,7 +149,15 @@ class SeedData {
       'activeBranchId': null,
     });
 
-    await firestore.collection('employees').add({
+    /// ======================
+    /// EMPLOYEE 3 (MULTI COMPANY)
+    /// ======================
+    final emp3Auth = await auth.createUserWithEmailAndPassword(
+      email: 'emp3@test.com',
+      password: '123456',
+    );
+
+    await firestore.collection('employees').doc(emp3Auth.user!.uid).set({
       'name': 'Employee 3',
       'email': 'emp3@test.com',
       'role': 'employee',
@@ -151,7 +172,15 @@ class SeedData {
       'activeBranchId': null,
     });
 
-    await firestore.collection('employees').add({
+    /// ======================
+    /// EMPLOYEE 4
+    /// ======================
+    final emp4Auth = await auth.createUserWithEmailAndPassword(
+      email: 'emp4@test.com',
+      password: '123456',
+    );
+
+    await firestore.collection('employees').doc(emp4Auth.user!.uid).set({
       'name': 'Employee 4',
       'email': 'emp4@test.com',
       'role': 'employee',
@@ -163,7 +192,11 @@ class SeedData {
       'activeBranchId': null,
     });
 
+    /// ======================
+    /// SEED FLAG
+    /// ======================
     await seedDoc.set({'done': true});
-    print('Seed v8 inserted successfully');
+
+    print('Seed v9 inserted successfully');
   }
 }

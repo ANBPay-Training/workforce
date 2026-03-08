@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:workforce/screens/user_branches_page.dart';
 import 'package:workforce/widgets/login/password_field_widget.dart';
 import '../controllers/login_controller.dart';
 import '../l10n/app_localizations.dart';
@@ -7,6 +8,7 @@ import '../models/app_state.dart';
 import '../utils/logout_helper.dart';
 import '../widgets/login/login_Button_Widget.dart';
 import 'AdminDashboard.dart';
+import 'Start_Work_Page.dart';
 import 'branch_list_page.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -48,25 +50,62 @@ class _LoginScreenState extends State<LoginScreen> {
     final error = await _controller.login(context);
     // Displays an error message and stops
     if (error != null) {
-      _showMessage(error);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error)),
+      );
       return;
     }
     // Decide navigation based on role stored in AppState
-    if (AppState().isAdmin) {
+    final appState = AppState();
+
+    /// 🔵 ADMIN
+    if (appState.isAdmin) {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const AdminDashboard()),
       );
-    } else if (AppState().isCompany) {
+    }
+
+    /// 🟢 COMPANY
+    else if (appState.isCompany) {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
           builder: (_) => BranchListPage(
-            companyId: AppState().userId!, // UID of company
-            companyName: AppState().companyName!, // Company name
+            companyId: appState.userId!,
+            companyName: appState.companyName!,
           ),
         ),
       );
+    }
+
+    /// 🟣 EMPLOYEE
+    else if (appState.isEmployee) {
+      if (appState.isWorking &&
+          appState.activeCompanyId != null &&
+          appState.activeBranchId != null) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => StartWorkPage(
+              employeeId: appState.userId!,
+              companyId: appState.activeCompanyId!,
+              branchId: appState.activeBranchId!,
+              companyName: '',
+              branchName: '',
+            ),
+          ),
+        );
+      } else {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => UserBranchesPage(
+              userId: appState.userId!,
+            ),
+          ),
+        );
+      }
     }
   }
 
