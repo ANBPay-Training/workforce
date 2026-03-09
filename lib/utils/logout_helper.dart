@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/app_state.dart';
-import '../screens/login_screen.dart';
+import '../screens/login/login_screen.dart';
 
 class LogoutHelper {
   static Future<void> logout(BuildContext context) async {

@@ -1,15 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:workforce/screens/login/widgets/reset_password_dialog.dart';
 import 'package:workforce/screens/user_branches_page.dart';
-import 'package:workforce/widgets/login/password_field_widget.dart';
-import '../controllers/login_controller.dart';
-import '../l10n/app_localizations.dart';
-import '../main.dart';
-import '../models/app_state.dart';
-import '../utils/logout_helper.dart';
-import '../widgets/login/login_Button_Widget.dart';
-import 'AdminDashboard.dart';
-import 'Start_Work_Page.dart';
-import 'branch_list_page.dart';
+import 'package:workforce/screens/login/widgets/password_field_widget.dart';
+import '../../../../controllers/login_controller.dart';
+import '../../../../l10n/app_localizations.dart';
+import '../../../../main.dart';
+import '../../utils/input_decoration.dart';
+import '../../utils/login_navigation.dart';
+import 'widgets/login_Button_Widget.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -50,133 +48,11 @@ class _LoginScreenState extends State<LoginScreen> {
     final error = await _controller.login(context);
     // Displays an error message and stops
     if (error != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error)),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(error)));
       return;
     }
-    // Decide navigation based on role stored in AppState
-    final appState = AppState();
-
-    /// 🔵 ADMIN
-    if (appState.isAdmin) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const AdminDashboard()),
-      );
-    }
-
-    /// 🟢 COMPANY
-    else if (appState.isCompany) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (_) => BranchListPage(
-            companyId: appState.userId!,
-            companyName: appState.companyName!,
-          ),
-        ),
-      );
-    }
-
-    /// 🟣 EMPLOYEE
-    else if (appState.isEmployee) {
-      if (appState.isWorking &&
-          appState.activeCompanyId != null &&
-          appState.activeBranchId != null) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (_) => StartWorkPage(
-              employeeId: appState.userId!,
-              companyId: appState.activeCompanyId!,
-              branchId: appState.activeBranchId!,
-              companyName: '',
-              branchName: '',
-            ),
-          ),
-        );
-      } else {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (_) => UserBranchesPage(
-              userId: appState.userId!,
-            ),
-          ),
-        );
-      }
-    }
-  }
-
-  void _showResetPasswordDialog() {
-    // Read the email address entered by the user.
-    final resetEmailController = TextEditingController();
-    // Display a popup on the screen.
-    showDialog(
-      // BuildContext is required to display the dialog on the current screen.
-      context: context,
-      // Uses Flutter’s standard dialog with a title, content, and action buttons.
-      builder: (context) => AlertDialog(
-        title: Text(AppLocalizations.of(context)!.resetPasswordTitle),
-        // Text field for entering the user's email address.
-        content: TextField(
-          controller: resetEmailController,
-          // Opens the appropriate email keyboard.
-          keyboardType: TextInputType.emailAddress,
-          decoration: const InputDecoration(
-              labelText: 'Email', hintText: 'user@company.com'),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () => LogoutHelper.logout(context),
-          ),
-          TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel')),
-          ElevatedButton(
-            onPressed: () async {
-              // If the email is empty or invalid, an error message is displayed
-              // and the process does not continue.
-              final email = resetEmailController.text.trim();
-              if (email.isEmpty || !email.contains('@')) {
-                _showMessage(AppLocalizations.of(context)!.invalidEmail);
-                return;
-              }
-              // Calls the resetPassword method in the controller.
-
-              final error = await _controller.resetPassword(context, email);
-              Navigator.pop(context);
-              if (error != null)
-                _showMessage(error);
-              else
-                _showMessage(
-                  // Provides context to access translations
-                  AppLocalizations.of(context)!.resetPasswordSent,
-                );
-            },
-            child: const Text('Send'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  InputDecoration _inputDecoration(String label) {
-    return InputDecoration(
-      labelText: label,
-      filled: true,
-      fillColor: inputFillBlue,
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: BorderSide(color: Colors.grey.shade300),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: BorderSide(color: primaryBlue, width: 2),
-      ),
-    );
+    LoginNavigation.handle(context);
   }
 
   @override
@@ -240,8 +116,10 @@ class _LoginScreenState extends State<LoginScreen> {
                         const SizedBox(height: 20),
                         TextFormField(
                           controller: _controller.emailController,
-                          decoration: _inputDecoration(
-                            AppLocalizations.of(context)!.username,
+                          decoration: InputDecorations.authField(
+                            label: AppLocalizations.of(context)!.username,
+                            fillColor: inputFillBlue,
+                            focusColor: primaryBlue,
                           ),
                           validator: (v) => v == null || v.trim().isEmpty
                               ? AppLocalizations.of(context)!.emailRequired
@@ -258,7 +136,9 @@ class _LoginScreenState extends State<LoginScreen> {
                         Align(
                           alignment: Alignment.centerRight,
                           child: TextButton(
-                            onPressed: _showResetPasswordDialog,
+                            onPressed: () {
+                              ResetPasswordDialog.show(context, _controller);
+                            },
                             child: Text(
                               AppLocalizations.of(context)!.forgotPassword,
                               style: TextStyle(color: primaryBlue),
