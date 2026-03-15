@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:workforce/screens/login/widgets/forgot_password_button.dart';
+import 'package:workforce/screens/login/widgets/language_dropdown_widget.dart';
 import 'package:workforce/screens/login/widgets/reset_password_dialog.dart';
-import 'package:workforce/screens/user_branches_page.dart';
 import 'package:workforce/screens/login/widgets/password_field_widget.dart';
 import '../../../../controllers/login_controller.dart';
 import '../../../../l10n/app_localizations.dart';
-import '../../../../main.dart';
 import '../../utils/input_decoration.dart';
 import '../../utils/login_navigation.dart';
 import 'widgets/login_Button_Widget.dart';
@@ -82,35 +82,12 @@ class _LoginScreenState extends State<LoginScreen> {
                             style: const TextStyle(
                                 fontSize: 20, fontWeight: FontWeight.bold)),
                         const SizedBox(height: 20),
-                        DropdownButtonFormField<String>(
-                          value: _language,
-                          decoration: const InputDecoration(
-                            border: OutlineInputBorder(),
-                          ),
-                          items: [
-                            DropdownMenuItem(
-                              value: 'DA',
-                              child: Text(
-                                '${AppLocalizations.of(context)!.language}: Dansk',
-                              ),
-                            ),
-                            DropdownMenuItem(
-                              value: 'EN',
-                              child: Text(
-                                '${AppLocalizations.of(context)!.language}: English',
-                              ),
-                            ),
-                          ],
+                        LanguageDropdownWidget(
+                          language: _language,
                           onChanged: (value) {
-                            if (value == null) return;
-
-                            setState(() => _language = value);
-
-                            MyApp.of(context).setLocale(
-                              value == 'DA'
-                                  ? const Locale('da')
-                                  : const Locale('en'),
-                            );
+                            setState(() {
+                              _language = value;
+                            });
                           },
                         ),
                         const SizedBox(height: 20),
@@ -118,8 +95,6 @@ class _LoginScreenState extends State<LoginScreen> {
                           controller: _controller.emailController,
                           decoration: InputDecorations.authField(
                             label: AppLocalizations.of(context)!.username,
-                            fillColor: inputFillBlue,
-                            focusColor: primaryBlue,
                           ),
                           validator: (v) => v == null || v.trim().isEmpty
                               ? AppLocalizations.of(context)!.emailRequired
@@ -133,17 +108,9 @@ class _LoginScreenState extends State<LoginScreen> {
                               ? AppLocalizations.of(context)!.passwordRequired
                               : null,
                         ),
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: TextButton(
-                            onPressed: () {
-                              ResetPasswordDialog.show(context, _controller);
-                            },
-                            child: Text(
-                              AppLocalizations.of(context)!.forgotPassword,
-                              style: TextStyle(color: primaryBlue),
-                            ),
-                          ),
+                        ForgotPasswordButton(
+                          color: primaryBlue,
+                          onPressed: _openResetPassword,
                         ),
                         const SizedBox(height: 12),
                         LoginButtonWidget(
@@ -162,5 +129,9 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
       ),
     );
+  }
+
+  void _openResetPassword() {
+    ResetPasswordDialog.show(context, _controller);
   }
 }

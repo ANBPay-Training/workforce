@@ -38,6 +38,9 @@ class _EmployeeListPageState extends State<EmployeeListPage> {
   }
 
   Future<void> loadEmployees() async {
+    setState(() {
+      loading = true;
+    });
     final list =
         await service.getEmployeesByBranch(widget.companyId, widget.branchId);
 
@@ -72,8 +75,8 @@ class _EmployeeListPageState extends State<EmployeeListPage> {
     }
   }
 
-  void _onEmployeeSelected(Employee employee) {
-    Navigator.push(
+  Future<void> _onEmployeeSelected(Employee employee) async {
+    await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => StartWorkPage(
@@ -85,6 +88,8 @@ class _EmployeeListPageState extends State<EmployeeListPage> {
         ),
       ),
     );
+
+    loadEmployees();
   }
 
   @override
